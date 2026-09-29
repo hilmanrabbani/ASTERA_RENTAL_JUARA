@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 255 255 255;
+  --surface: 248 250 252;
+  --text: 15 23 42;
+  --muted: 100 116 139;
+  --border: 226 232 240;
+  --gold: 191 155 48;
+}
+
+.dark {
+  --bg: 4 10 24;
+  --surface: 10 18 35;
+  --text: 226 232 240;
+  --muted: 148 163 184;
+  --border: 30 41 59;
+  --gold: 234 196 92;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: rgb(var(--bg));
+  color: rgb(var(--text));
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Background grid ala React Bits */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(var(--border) / 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--border) / 0.6) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+
+/* Glow border ala React Bits */
+.glow-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(130deg,
+    transparent 20%,
+    rgb(var(--gold) / 0.9) 45%,
+    transparent 70%);
+  background-size: 250% 250%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.glow-card:hover::before {
+  opacity: 1;
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* Scrollbar halus */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--gold) / 0.7); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
