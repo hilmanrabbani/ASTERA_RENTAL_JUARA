@@ -1,0 +1,375 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import {
+  ShieldCheck,
+  Upload,
+  Loader2,
+  CreditCard,
+  User,
+  ArrowLeft,
+} from 'lucide-react';
+import Link from 'next/link';
+import OrderSummary from '@/components/checkout/OrderSummary';
+import { dummyCars } from '@/lib/dummyCars';
+import { useBooking } from '@/lib/store';
+import { hitungDurasi, kodePesanan, waPesan } from '@/lib/utils';
+
+export default function CheckoutPage() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const { rental, setRental, setCar, reset } = useBooking();
+
+  const car = useMemo(
+    () => dummyCars.find((c) => c.id === params.id),
+    [params.id]
+  );
+
+  const [form, setForm] = useState({
+    full_name: '',
+    whatsapp: '',
+    address: '',
+    ktp_number: '',
+  });
+  const [ktpFile, setKtpFile] = useState<File | null>(null);
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Sinkronkan mobil ke store saat halaman dibuka
+  useEffect(() => {
+    if (car) setCar(car);
+  }, [car, setCar]);
+
+  const durasi = useMemo(
+    () => hitungDurasi(rental.startDate, rental.startTime, rental.endDate, rental.endTime),
+    [rental]
+  );
+  const total = durasi * (car?.price_per_day ?? 0);
+
+  if (!car) {
+    return (
+      <section className="mx-auto max-w-2xl px-5 py-24 text-center">
+        <p className="text-xl font-bold">Mobil tidak ditemukan</p>
+        <Link
+          href="/katalog"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white"
+        >
+          <ArrowLeft size={16} /> Kembali ke Katalog
+        </Link>
+      </section>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!ktpFile || !selfieFile) {
+      return setError('Foto KTP dan Selfie bersama KTP wajib diunggah.');
+    }
+    if (durasi < 1) {
+      return setError('Tanggal selesai harus setelah tanggal mulai.');
+    }
+
+    setLoading(true);
+
+    // Simulasi proses (nanti diganti Supabase)
+    await new Promise((res) => setTimeout(res, 800));
+
+    // Buka WhatsApp dengan draft pesan
+    const url = waPesan({
+      order_code: kodePesanan(),
+      full_name: form.full_name,
+      whatsapp: form.whatsapp,
+      car_name: car.name,
+      duration_days: durasi,
+      start_date: rental.startDate,
+      start_time: rental.startTime,
+      end_date: rental.endDate,
+      end_time: rental.endTime,
+      service_type: rental.serviceType,
+      total_price: total,
+    });
+
+    window.open(url, '_blank', 'noopener');
+    setLoading(false);
+    reset();
+    router.push('/checkout/sukses');
+  };
+
+  return (
+    <section className="mx-auto max-w-6xl px-5 pb-24 sm:px-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 22 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55 }}
+      >
+        <Link
+          href="/katalog"
+          className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-gold"
+        >
+          <ArrowLeft size={14} /> Kembali ke Katalog
+        </Link>
+        <h1 className="mt-4 text-3xl font-extrabold sm:text-4xl">
+          Pemesanan <span className="text-gold">Mobil</span>
+        </h1>
+        <p className="mt-2 text-muted">
+          Lengkapi data di bawah ini. Pesanan Anda akan langsung diteruskan ke Admin.
+        </p>
+      </motion.div>
+
+      <div className="mt-9 grid gap-8 lg:grid-cols-[1.55fr_1fr]">
+        {/* ============ FORM ============ */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Data Diri */}
+          <Card title="Data Diri" icon={<User size={17} />}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Nama Lengkap" required>
+                <input
+                  required
+                  value={form.full_name}
+                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  placeholder="Sesuai KTP"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Nomor WhatsApp" required>
+                <input
+                  required
+                  inputMode="tel"
+                  value={form.whatsapp}
+                  onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+                  placeholder="08xxxxxxxxxx"
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+            <Field label="Alamat Domisili" required className="mt-4">
+              <textarea
+                required
+                rows={3}
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="Jalan, No. Rumah, Kelurahan, Kota"
+                className={inputCls}
+              />
+            </Field>
+          </Card>
+
+          {/* Jadwal & Layanan */}
+          <Card title="Jadwal & Layanan" icon={<ShieldCheck size={17} />}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Tanggal Mulai" required>
+                <input
+                  type="date"
+                  required
+                  value={rental.startDate}
+                  onChange={(e) => setRental({ startDate: e.target.value })}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Jam Mulai" required>
+                <input
+                  type="time"
+                  required
+                  value={rental.startTime}
+                  onChange={(e) => setRental({ startTime: e.target.value })}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Tanggal Selesai" required>
+                <input
+                  type="date"
+                  required
+                  value={rental.endDate}
+                  onChange={(e) => setRental({ endDate: e.target.value })}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Jam Selesai" required>
+                <input
+                  type="time"
+                  required
+                  value={rental.endTime}
+                  onChange={(e) => setRental({ endTime: e.target.value })}
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+
+            <p className="mt-4 text-sm font-semibold">Opsi Layanan</p>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+              {(
+                [
+                  ['lepas_kunci', 'Lepas Kunci', 'Anda menyetir sendiri'],
+                  ['dengan_sopir', 'Dengan Sopir', 'Lebih praktis & aman'],
+                ] as const
+              ).map(([val, t, s]) => (
+                <button
+                  type="button"
+                  key={val}
+                  onClick={() => setRental({ serviceType: val })}
+                  className={`rounded-2xl border-2 p-4 text-left transition ${
+                    rental.serviceType === val
+                      ? 'border-gold bg-gold/10 shadow-glow'
+                      : 'border-line hover:border-gold/50'
+                  }`}
+                >
+                  <span className="block text-sm font-bold">{t}</span>
+                  <span className="block text-xs text-muted">{s}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          {/* Verifikasi Identitas */}
+          <Card title="Verifikasi Identitas" icon={<CreditCard size={17} />}>
+            <Field label="Nomor KTP" required>
+              <input
+                required
+                inputMode="numeric"
+                maxLength={16}
+                value={form.ktp_number}
+                onChange={(e) =>
+                  setForm({ ...form, ktp_number: e.target.value.replace(/\D/g, '') })
+                }
+                placeholder="16 digit NIK"
+                className={inputCls}
+              />
+            </Field>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <UploadBox
+                label="Upload Foto KTP"
+                hint="JPG/PNG maks 5MB"
+                file={ktpFile}
+                onChange={setKtpFile}
+              />
+              <UploadBox
+                label="Selfie bersama KTP"
+                hint="Wajah & KTP terlihat jelas"
+                file={selfieFile}
+                onChange={setSelfieFile}
+              />
+            </div>
+
+            <p className="mt-4 flex items-start gap-2 rounded-xl bg-brand-500/10 p-3 text-xs text-muted">
+              <ShieldCheck size={15} className="mt-0.5 shrink-0 text-brand-500" />
+              Data identitas Anda dienkripsi dan hanya digunakan untuk keperluan verifikasi
+              penyewaan.
+            </p>
+          </Card>
+
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-500"
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="group flex w-full items-center justify-center gap-2 rounded-2xl
+                       bg-gradient-to-r from-brand-600 to-brand-500 py-4 text-sm font-bold text-white
+                       shadow-xl transition hover:shadow-glow disabled:opacity-60"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={17} className="animate-spin" /> Memproses…
+              </>
+            ) : (
+              'Konfirmasi & Kirim ke WhatsApp'
+            )}
+          </button>
+        </form>
+
+        {/* ============ RINGKASAN ============ */}
+        <OrderSummary car={car} rental={rental} durasi={durasi} total={total} />
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Sub-komponen kecil ---------- */
+
+const inputCls =
+  'w-full rounded-xl border border-line bg-bg/70 px-4 py-3 text-sm outline-none transition ' +
+  'focus:border-gold focus:ring-2 focus:ring-gold/25 placeholder:text-muted/60';
+
+function Card({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-3xl border border-line bg-surface/60 p-6 backdrop-blur-xl">
+      <h2 className="mb-5 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wider text-gold">
+        {icon} {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+function Field({
+  label,
+  required,
+  className = '',
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-1.5 block text-xs font-semibold text-muted">
+        {label} {required && <span className="text-gold">*</span>}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function UploadBox({
+  label,
+  hint,
+  file,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  file: File | null;
+  onChange: (f: File) => void;
+}) {
+  return (
+    <label
+      className={`group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl
+        border-2 border-dashed p-6 text-center transition
+        ${file ? 'border-gold bg-gold/10' : 'border-line hover:border-gold/60 hover:bg-gold/5'}`}
+    >
+      <Upload size={22} className={file ? 'text-gold' : 'text-muted group-hover:text-gold'} />
+      <span className="text-xs font-bold">{file ? file.name.slice(0, 28) : label}</span>
+      <span className="text-[11px] text-muted">{hint}</span>
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => e.target.files?.[0] && onChange(e.target.files[0])}
+      />
+    </label>
+  );
+}
