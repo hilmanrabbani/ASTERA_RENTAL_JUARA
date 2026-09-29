@@ -1,6 +1,6 @@
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen bg-bg text-content">
+    <main className="relative min-h-screen">
       {/* Background grid */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-grid opacity-60" />
 
