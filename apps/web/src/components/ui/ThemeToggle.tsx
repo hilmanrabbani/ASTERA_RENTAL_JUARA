@@ -13,6 +13,18 @@ export default function ThemeToggle() {
 
   const dark = resolvedTheme === 'dark';
 
+  // ✅ FIX HYDRATION: sebelum mounted, tampilkan placeholder (sama di server & client)
+  if (!mounted) {
+    return (
+      <div
+        aria-hidden
+        className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface/70 backdrop-blur"
+      >
+        <span className="block h-[18px] w-[18px]" />
+      </div>
+    );
+  }
+
   return (
     <button
       aria-label="Ganti tema"
@@ -22,7 +34,7 @@ export default function ThemeToggle() {
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
-          key={mounted ? (dark ? 'moon' : 'sun') : 'x'}
+          key={dark ? 'moon' : 'sun'}
           initial={{ rotate: -90, opacity: 0, scale: 0.6 }}
           animate={{ rotate: 0, opacity: 1, scale: 1 }}
           exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
