@@ -44,19 +44,22 @@ export default function Navbar() {
               : 'border border-transparent py-3'
           }`}
       >
-        {/* Logo */}
-        <Link href="/" className="group flex items-center gap-2.5">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 shadow-lg transition group-hover:shadow-glow">
-            <Car size={20} className="text-white" />
-          </span>
-          <span className="leading-tight">
-            <span className="block font-extrabold tracking-tight">Astera</span>
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
-              Rental Bandung
-            </span>
-          </span>
-        </Link>
-
+     <Link href="/" className="group flex items-center gap-2.5">
+  <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-line transition group-hover:shadow-glow">
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
+      src="/logo.png"
+      alt="Astera Rental Logo"
+      className="h-15 w-15 object-contain"
+    />
+  </span>
+  <span className="leading-tight">
+    <span className="block font-extrabold tracking-tight">Astera</span>
+    <span className="block text-[15px] font-semibold uppercase tracking-[0.2em] text-gold">
+      Rental Bandung
+    </span>
+  </span>
+</Link>
         {/* Desktop menu */}
         <ul className="hidden items-center gap-1 lg:flex">
           {NAV.map((n) => {
