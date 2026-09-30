@@ -17,8 +17,12 @@ export const metadata: Metadata = {
   description:
     'Rental mobil terpercaya di Bandung. Armada lengkap, harga transparan, layanan lepas kunci & dengan sopir.',
   keywords: ['rental mobil bandung', 'sewa mobil bandung', 'astera rental'],
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
 };
-
 export default function RootLayout({
   children,
 }: {
