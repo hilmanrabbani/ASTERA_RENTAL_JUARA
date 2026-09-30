@@ -13,20 +13,18 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import OrderSummary from '@/components/checkout/OrderSummary';
-import { dummyCars } from '@/lib/dummyCars';
+import type { Car } from '@/lib/dummyCars';
 import { useBooking } from '@/lib/store';
 import { hitungDurasi, kodePesanan, waPesan } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CheckoutPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { rental, setRental, setCar, reset } = useBooking();
 
-  const car = useMemo(
-    () => dummyCars.find((c) => c.id === params.id),
-    [params.id]
-  );
-
+  const [car, setCarData] = useState<Car | null>(null);
+  const [loadingCar, setLoadingCar] = useState(true);
   const [form, setForm] = useState({
     full_name: '',
     whatsapp: '',
@@ -38,16 +36,41 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Sinkronkan mobil ke store saat halaman dibuka
   useEffect(() => {
-    if (car) setCar(car);
-  }, [car, setCar]);
+    (async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('id', params.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetch car:', error);
+      } else if (data) {
+        setCarData(data as Car);
+        setCar(data as Car);
+      }
+      setLoadingCar(false);
+    })();
+  }, [params.id, setCar]);
 
   const durasi = useMemo(
     () => hitungDurasi(rental.startDate, rental.startTime, rental.endDate, rental.endTime),
     [rental]
   );
   const total = durasi * (car?.price_per_day ?? 0);
+
+  if (loadingCar) {
+    return (
+      <section className="mx-auto grid min-h-[60vh] place-items-center px-5">
+        <div className="flex flex-col items-center gap-3 text-muted">
+          <Loader2 size={32} className="animate-spin text-gold" />
+          <p className="text-sm">Memuat data mobil…</p>
+        </div>
+      </section>
+    );
+  }
 
   if (!car) {
     return (
@@ -73,36 +96,76 @@ export default function CheckoutPage() {
     if (durasi < 1) {
       return setError('Tanggal selesai harus setelah tanggal mulai.');
     }
+    if (form.ktp_number.length !== 16) {
+      return setError('Nomor KTP harus 16 digit.');
+    }
 
     setLoading(true);
+    const supabase = createClient();
+    const kode = kodePesanan();
 
-    // Simulasi proses (nanti diganti Supabase)
-    await new Promise((res) => setTimeout(res, 800));
+    try {
+      const ktpPath = `orders/${kode}/ktp-${Date.now()}-${ktpFile.name.replace(/\s+/g, '_')}`;
+      const { error: ktpErr } = await supabase.storage
+        .from('ktp-documents')
+        .upload(ktpPath, ktpFile, { upsert: false, cacheControl: '3600' });
+      if (ktpErr) throw new Error(`Gagal upload KTP: ${ktpErr.message}`);
 
-    // Buka WhatsApp dengan draft pesan
-    const url = waPesan({
-      order_code: kodePesanan(),
-      full_name: form.full_name,
-      whatsapp: form.whatsapp,
-      car_name: car.name,
-      duration_days: durasi,
-      start_date: rental.startDate,
-      start_time: rental.startTime,
-      end_date: rental.endDate,
-      end_time: rental.endTime,
-      service_type: rental.serviceType,
-      total_price: total,
-    });
+      const selfiePath = `orders/${kode}/selfie-${Date.now()}-${selfieFile.name.replace(/\s+/g, '_')}`;
+      const { error: selfieErr } = await supabase.storage
+        .from('ktp-documents')
+        .upload(selfiePath, selfieFile, { upsert: false, cacheControl: '3600' });
+      if (selfieErr) throw new Error(`Gagal upload Selfie: ${selfieErr.message}`);
 
-    window.open(url, '_blank', 'noopener');
-    setLoading(false);
-    reset();
-    router.push('/checkout/sukses');
+      const { error: orderErr } = await supabase.from('orders').insert({
+        order_code: kode,
+        car_id: car.id,
+        car_name: car.name,
+        car_image: car.image_url,
+        full_name: form.full_name,
+        whatsapp: form.whatsapp,
+        address: form.address,
+        ktp_number: form.ktp_number,
+        ktp_photo_url: ktpPath,
+        selfie_photo_url: selfiePath,
+        start_date: rental.startDate,
+        start_time: rental.startTime,
+        end_date: rental.endDate,
+        end_time: rental.endTime,
+        duration_days: durasi,
+        service_type: rental.serviceType,
+        price_per_day: car.price_per_day,
+        total_price: total,
+        status: 'pending',
+      });
+      if (orderErr) throw new Error(`Gagal simpan pesanan: ${orderErr.message}`);
+
+      const url = waPesan({
+        order_code: kode,
+        full_name: form.full_name,
+        whatsapp: form.whatsapp,
+        car_name: car.name,
+        duration_days: durasi,
+        start_date: rental.startDate,
+        start_time: rental.startTime,
+        end_date: rental.endDate,
+        end_time: rental.endTime,
+        service_type: rental.serviceType,
+        total_price: total,
+      });
+      window.open(url, '_blank', 'noopener');
+
+      reset();
+      router.push(`/checkout/sukses?kode=${kode}`);
+    } catch (err: unknown) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan. Coba lagi.');
+      setLoading(false);
+    }
   };
 
   return (
     <section className="mx-auto max-w-6xl px-5 pb-24 sm:px-8">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 22 }}
         animate={{ opacity: 1, y: 0 }}
@@ -123,9 +186,7 @@ export default function CheckoutPage() {
       </motion.div>
 
       <div className="mt-9 grid gap-8 lg:grid-cols-[1.55fr_1fr]">
-        {/* ============ FORM ============ */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Data Diri */}
           <Card title="Data Diri" icon={<User size={17} />}>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Nama Lengkap" required>
@@ -160,7 +221,6 @@ export default function CheckoutPage() {
             </Field>
           </Card>
 
-          {/* Jadwal & Layanan */}
           <Card title="Jadwal & Layanan" icon={<ShieldCheck size={17} />}>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Tanggal Mulai" required>
@@ -226,7 +286,6 @@ export default function CheckoutPage() {
             </div>
           </Card>
 
-          {/* Verifikasi Identitas */}
           <Card title="Verifikasi Identitas" icon={<CreditCard size={17} />}>
             <Field label="Nomor KTP" required>
               <input
@@ -291,14 +350,11 @@ export default function CheckoutPage() {
           </button>
         </form>
 
-        {/* ============ RINGKASAN ============ */}
         <OrderSummary car={car} rental={rental} durasi={durasi} total={total} />
       </div>
     </section>
   );
 }
-
-/* ---------- Sub-komponen kecil ---------- */
 
 const inputCls =
   'w-full rounded-xl border border-line bg-bg/70 px-4 py-3 text-sm outline-none transition ' +

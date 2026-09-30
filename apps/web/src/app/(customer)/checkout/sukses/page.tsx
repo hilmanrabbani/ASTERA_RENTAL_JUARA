@@ -1,12 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, MessageCircle, ArrowLeft } from 'lucide-react';
 import { WA_LINK } from '@/lib/constants';
 
 function Inner() {
+  const kode = useSearchParams().get('kode') ?? '-';
+
   return (
     <section className="mx-auto grid min-h-[70vh] max-w-2xl place-items-center px-5 pb-24 text-center sm:px-8">
       <motion.div
@@ -25,9 +28,15 @@ function Inner() {
         <h1 className="mt-6 text-3xl font-extrabold sm:text-4xl">
           Pesanan Berhasil Dikirim!
         </h1>
-        <p className="mt-3 text-muted">
-          Admin akan segera memverifikasi data Anda dan menghubungi via WhatsApp.
-          Jika WhatsApp belum terbuka otomatis, klik tombol di bawah.
+
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-2 text-sm">
+          <span className="text-muted">Kode Pesanan:</span>
+          <span className="font-extrabold tracking-wider text-gold">{kode}</span>
+        </div>
+
+        <p className="mt-4 text-muted">
+          Admin akan segera memverifikasi data Anda dan menghubungi via WhatsApp. Simpan kode ini
+          untuk referensi.
         </p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -56,7 +65,7 @@ function Inner() {
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-500/15 text-xs font-bold text-brand-600 dark:text-brand-400">
                 1
               </span>
-              Admin memverifikasi data & identitas Anda (estimasi &lt; 15 menit).
+              Admin memverifikasi data &amp; identitas Anda (estimasi &lt; 15 menit).
             </li>
             <li className="flex gap-3">
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-500/15 text-xs font-bold text-brand-600 dark:text-brand-400">
@@ -68,7 +77,7 @@ function Inner() {
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-500/15 text-xs font-bold text-brand-600 dark:text-brand-400">
                 3
               </span>
-              Lakukan pembayaran & mobil siap diantar sesuai jadwal.
+              Lakukan pembayaran &amp; mobil siap diantar sesuai jadwal.
             </li>
           </ol>
         </div>

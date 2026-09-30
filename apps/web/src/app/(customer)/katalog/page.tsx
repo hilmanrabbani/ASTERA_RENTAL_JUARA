@@ -1,21 +1,42 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2 } from 'lucide-react';
 import CarCard from '@/components/catalog/CarCard';
-import { dummyCars } from '@/lib/dummyCars';
 import { CATEGORIES } from '@/lib/constants';
 import { rupiah } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+import type { Car } from '@/lib/dummyCars';
 
 export default function KatalogPage() {
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [kategori, setKategori] = useState<string>('Semua');
   const [maxHarga, setMaxHarga] = useState(2_500_000);
   const [sort, setSort] = useState<'termurah' | 'termahal' | 'nama'>('termurah');
 
+  // Fetch data dari Supabase
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('cars')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetch cars:', error);
+      } else {
+        setCars((data as Car[]) ?? []);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
   const hasil = useMemo(() => {
-    let r = dummyCars.filter(
+    let r = cars.filter(
       (c) =>
         c.name.toLowerCase().includes(q.toLowerCase()) &&
         (kategori === 'Semua' || c.category === kategori) &&
@@ -27,11 +48,10 @@ export default function KatalogPage() {
     if (sort === 'nama') r = [...r].sort((a, b) => a.name.localeCompare(b.name));
 
     return r;
-  }, [q, kategori, maxHarga, sort]);
+  }, [cars, q, kategori, maxHarga, sort]);
 
   return (
     <section className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -45,7 +65,6 @@ export default function KatalogPage() {
         </p>
       </motion.div>
 
-      {/* Panel Filter */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -57,7 +76,6 @@ export default function KatalogPage() {
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr_1.4fr_1fr]">
-          {/* Pencarian */}
           <label className="flex items-center gap-2 rounded-xl border border-line bg-bg/70 px-4 py-3 transition focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/25">
             <Search size={16} className="shrink-0 text-muted" />
             <input
@@ -68,7 +86,6 @@ export default function KatalogPage() {
             />
           </label>
 
-          {/* Kategori */}
           <select
             value={kategori}
             onChange={(e) => setKategori(e.target.value)}
@@ -82,7 +99,6 @@ export default function KatalogPage() {
             ))}
           </select>
 
-          {/* Harga Slider */}
           <div className="rounded-xl border border-line bg-bg/70 px-4 py-2.5">
             <div className="flex justify-between text-[11px] font-semibold text-muted">
               <span>Harga maksimal</span>
@@ -99,7 +115,6 @@ export default function KatalogPage() {
             />
           </div>
 
-          {/* Sort */}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as never)}
@@ -112,15 +127,25 @@ export default function KatalogPage() {
         </div>
       </motion.div>
 
-      {/* Grid Mobil */}
-      {hasil.length === 0 ? (
+      {loading && (
+        <div className="mt-16 grid place-items-center py-20">
+          <div className="flex flex-col items-center gap-3 text-muted">
+            <Loader2 size={32} className="animate-spin text-gold" />
+            <p className="text-sm">Memuat data mobil…</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && hasil.length === 0 && (
         <div className="mt-16 rounded-3xl border border-dashed border-line py-20 text-center">
           <p className="text-lg font-bold">Belum ada mobil yang cocok</p>
           <p className="mt-1 text-sm text-muted">
             Coba ubah filter atau hubungi kami via WhatsApp.
           </p>
         </div>
-      ) : (
+      )}
+
+      {!loading && hasil.length > 0 && (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {hasil.map((c, i) => (
             <CarCard key={c.id} car={c} index={i} />
