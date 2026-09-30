@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Sparkles, ShieldCheck, Clock, Star, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import Reveal from '@/components/ui/Reveal';
+import { createClient } from '@/lib/supabase/client';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40, filter: 'blur(8px)' },
@@ -15,7 +17,43 @@ const fadeUp = {
   }),
 };
 
+interface SiteContent {
+  hero_title: string;
+  hero_subtitle: string;
+}
+
+const DEFAULT_CONTENT: SiteContent = {
+  hero_title: 'Selamat Datang di Astera Rental Bandung',
+  hero_subtitle:
+    'Solusi Perjalanan Nyaman & Elegan Anda. Pilih armada favorit, isi data, dan mobil siap diantar ke lokasi Anda.',
+};
+
 export default function HomePage() {
+  const [content, setContent] = useState<SiteContent>(DEFAULT_CONTENT);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('site_content')
+        .select('key, value')
+        .in('key', ['hero_title', 'hero_subtitle']);
+
+      if (data && data.length > 0) {
+        const getVal = (key: string) =>
+          (data.find((d) => d.key === key)?.value as { text?: string } | undefined)?.text;
+
+        setContent({
+          hero_title: getVal('hero_title') ?? DEFAULT_CONTENT.hero_title,
+          hero_subtitle: getVal('hero_subtitle') ?? DEFAULT_CONTENT.hero_subtitle,
+        });
+      }
+    })();
+  }, []);
+
+  // Split judul jadi 3 bagian: sebelum "Astera Rental", "Astera Rental", setelahnya
+  const titleParts = content.hero_title.split('Astera Rental');
+
   return (
     <section className="mx-auto flex min-h-[80vh] max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
       <motion.span
@@ -35,11 +73,17 @@ export default function HomePage() {
         animate="show"
         className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
       >
-        Selamat Datang di{' '}
-        <span className="bg-gradient-to-r from-brand-600 via-brand-500 to-gold bg-clip-text text-transparent">
-          Astera Rental
-        </span>{' '}
-        Bandung
+        {titleParts.length === 2 ? (
+          <>
+            {titleParts[0]}
+            <span className="bg-gradient-to-r from-brand-600 via-brand-500 to-gold bg-clip-text text-transparent">
+              Astera Rental
+            </span>
+            {titleParts[1]}
+          </>
+        ) : (
+          content.hero_title
+        )}
       </motion.h1>
 
       <motion.p
@@ -49,8 +93,7 @@ export default function HomePage() {
         animate="show"
         className="mt-5 max-w-2xl text-base leading-relaxed text-muted sm:text-lg"
       >
-        Solusi Perjalanan Nyaman &amp; Elegan Anda. Pilih armada favorit, isi data, dan mobil siap
-        diantar ke lokasi Anda.
+        {content.hero_subtitle}
       </motion.p>
 
       <motion.div
@@ -111,12 +154,10 @@ export default function HomePage() {
 
       <Reveal delay={0.2} className="mt-20 w-full">
         <div className="glow-card rounded-3xl border border-line bg-surface/60 p-8 backdrop-blur-xl">
-          <h2 className="text-lg font-bold">
-            ✨ Navbar, Footer, dan Floating Social sudah aktif!
-          </h2>
+          <h2 className="text-lg font-bold">✨ Konten ini bisa diubah dari Admin Portal!</h2>
           <p className="mt-2 text-sm text-muted">
-            Lihat pojok kanan atas (toggle tema) &amp; pojok kanan bawah (WhatsApp, Instagram, Email).
-            Coba hover untuk melihat efek glow emas.
+            Login sebagai admin → menu <span className="font-bold text-gold">Konten Web</span> →
+            ubah judul &amp; FAQ. Refresh halaman ini, otomatis berubah.
           </p>
         </div>
       </Reveal>

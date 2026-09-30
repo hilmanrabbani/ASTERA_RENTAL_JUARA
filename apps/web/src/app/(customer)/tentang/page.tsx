@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   MapPin,
   Mail,
@@ -11,14 +11,38 @@ import {
   Sparkles,
   ShieldCheck,
   Clock,
+  Loader2,
 } from 'lucide-react';
 import Reveal from '@/components/ui/Reveal';
 import { WhatsappIcon } from '@/components/ui/Icons';
 import { CONTACT, IG_LINK, MAIL_LINK, WA_LINK } from '@/lib/constants';
+import { createClient } from '@/lib/supabase/client';
+
+const DEFAULT_ABOUT =
+  'Astera Rental Bandung hadir sejak 2019 sebagai penyedia jasa sewa mobil yang mengutamakan kenyamanan, keamanan, dan transparansi harga. Seluruh unit kami rutin diservis dan dibersihkan sebelum diserahkan kepada pelanggan. Dengan tim yang siaga 24 jam, perjalanan Anda di Bandung dan sekitarnya menjadi lebih tenang.';
 
 export default function TentangPage() {
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ nama: '', email: '', pesan: '' });
+  const [about, setAbout] = useState(DEFAULT_ABOUT);
+  const [loadingAbout, setLoadingAbout] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('site_content')
+        .select('value')
+        .eq('key', 'about_desc')
+        .maybeSingle();
+
+      if (data?.value) {
+        const v = data.value as { text?: string };
+        if (v.text) setAbout(v.text);
+      }
+      setLoadingAbout(false);
+    })();
+  }, []);
 
   const kirim = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +64,15 @@ export default function TentangPage() {
         <h1 className="mt-5 text-3xl font-extrabold sm:text-4xl">
           Tentang <span className="text-gold">Astera Rental</span>
         </h1>
-        <p className="mt-4 max-w-3xl leading-relaxed text-muted">
-          Astera Rental Bandung hadir sejak 2019 sebagai penyedia jasa sewa mobil yang mengutamakan
-          kenyamanan, keamanan, dan transparansi harga. Seluruh unit kami rutin diservis dan
-          dibersihkan sebelum diserahkan kepada pelanggan. Dengan tim yang siaga 24 jam, perjalanan
-          Anda di Bandung dan sekitarnya menjadi lebih tenang.
-        </p>
+
+        {loadingAbout ? (
+          <div className="mt-4 flex items-center gap-2 text-muted">
+            <Loader2 size={16} className="animate-spin" />
+            <span className="text-sm">Memuat…</span>
+          </div>
+        ) : (
+          <p className="mt-4 max-w-3xl leading-relaxed text-muted">{about}</p>
+        )}
       </Reveal>
 
       {/* Trust badges */}

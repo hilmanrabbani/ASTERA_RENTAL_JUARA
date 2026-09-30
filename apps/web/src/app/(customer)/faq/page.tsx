@@ -1,43 +1,50 @@
-import Link from 'next/link';
-import { HelpCircle } from 'lucide-react';
-import Accordion from '@/components/ui/Accordion';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { HelpCircle, Loader2 } from 'lucide-react';
+import Accordion, { type AccordionItem } from '@/components/ui/Accordion';
 import Reveal from '@/components/ui/Reveal';
 import { WhatsappIcon } from '@/components/ui/Icons';
 import { WA_LINK } from '@/lib/constants';
+import { createClient } from '@/lib/supabase/client';
 
-const FAQ = [
+const FALLBACK_FAQ: AccordionItem[] = [
   {
     q: 'Apa saja syarat menyewa mobil di Astera Rental?',
-    a: 'Cukup KTP asli, SIM A yang masih berlaku, dan deposit ringan. Untuk layanan dengan sopir, SIM tidak diwajibkan. Kami juga meminta foto selfie bersama KTP untuk verifikasi keamanan.',
+    a: 'Cukup KTP asli, SIM A yang masih berlaku, dan deposit ringan.',
   },
   {
     q: 'Berapa lama proses konfirmasi pesanan?',
-    a: 'Rata-rata di bawah 15 menit pada jam operasional (08.00 – 22.00 WIB). Anda akan dihubungi melalui WhatsApp untuk verifikasi data dan ketersediaan unit.',
-  },
-  {
-    q: 'Apakah bisa lepas kunci ke luar kota?',
-    a: 'Bisa, dengan konfirmasi tambahan dan biaya luar kota yang disesuaikan jarak tempuh. Untuk perjalanan jauh, kami menyarankan layanan dengan sopir demi keamanan bersama.',
-  },
-  {
-    q: 'Bagaimana metode pembayarannya?',
-    a: 'Transfer bank (BCA, Mandiri, BRI) atau e-wallet (GoPay, OVO, DANA). Pembayaran dilakukan setelah pesanan disetujui admin dan sebelum unit diserahkan.',
-  },
-  {
-    q: 'Apakah harga sudah termasuk BBM dan tol?',
-    a: 'Untuk paket lepas kunci, BBM dan tol ditanggung penyewa. Untuk paket dengan sopir, biaya BBM & tol dihitung terpisah sesuai rute perjalanan.',
-  },
-  {
-    q: 'Apakah ada biaya pembatalan?',
-    a: 'Pembatalan gratis hingga 24 jam sebelum jadwal pengambilan unit. Pembatalan di bawah 24 jam dikenakan biaya 25% dari total sewa.',
+    a: 'Rata-rata di bawah 15 menit pada jam operasional (08.00 – 22.00 WIB).',
   },
 ];
 
-export const metadata = {
-  title: 'FAQ',
-  description: 'Pertanyaan yang sering diajukan seputar rental mobil Astera Bandung.',
-};
-
 export default function FaqPage() {
+  const [faqs, setFaqs] = useState<AccordionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('faqs')
+        .select('question, answer')
+        .order('sort_order', { ascending: true });
+
+      if (error) {
+        console.error('Error fetch faqs:', error);
+        setFaqs(FALLBACK_FAQ);
+      } else {
+        const items = (data ?? []).map((f) => ({
+          q: f.question as string,
+          a: f.answer as string,
+        }));
+        setFaqs(items.length > 0 ? items : FALLBACK_FAQ);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
   return (
     <section className="mx-auto max-w-3xl px-5 pb-24 sm:px-8">
       <Reveal>
@@ -55,7 +62,13 @@ export default function FaqPage() {
       </Reveal>
 
       <div className="mt-9">
-        <Accordion items={FAQ} />
+        {loading ? (
+          <div className="grid place-items-center py-20">
+            <Loader2 size={32} className="animate-spin text-gold" />
+          </div>
+        ) : (
+          <Accordion items={faqs} />
+        )}
       </div>
 
       <Reveal delay={0.2}>
