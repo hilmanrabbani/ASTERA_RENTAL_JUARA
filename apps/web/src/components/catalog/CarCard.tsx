@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Users, Gauge, X, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -9,30 +9,6 @@ import { rupiah } from '@/lib/utils';
 
 export default function CarCard({ car, index = 0 }: { car: Car; index?: number }) {
   const router = useRouter();
-
-  // ---- Tilt effect pakai Framer Motion ----
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rx = useSpring(useTransform(my, [-0.5, 0.5], [9, -9]), {
-    stiffness: 260,
-    damping: 22,
-  });
-  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-9, 9]), {
-    stiffness: 260,
-    damping: 22,
-  });
-
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    mx.set((e.clientX - r.left) / r.width - 0.5);
-    my.set((e.clientY - r.top) / r.height - 0.5);
-  };
-
-  const handleLeave = () => {
-    mx.set(0);
-    my.set(0);
-  };
-
   const available = car.status === 'available';
 
   const pilih = () => {
@@ -42,22 +18,18 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 34 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{
-        duration: 0.55,
-        delay: Math.min(index * 0.07, 0.4),
+        duration: 0.4,
+        delay: Math.min(index * 0.04, 0.25),
         ease: [0.22, 1, 0.36, 1],
       }}
-      style={{ perspective: 1200 }}
     >
-      <motion.div
-        onMouseMove={handleMove}
-        onMouseLeave={handleLeave}
-        style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}
+      <div
         className="glow-card group relative flex h-full flex-col overflow-hidden rounded-3xl border
-                   border-line bg-surface/70 backdrop-blur-xl transition-shadow duration-500
+                   border-line bg-surface/70 backdrop-blur-xl transition-shadow duration-300
                    hover:shadow-card"
       >
         {/* Gambar */}
@@ -67,7 +39,7 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
             alt={car.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
@@ -86,7 +58,7 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 flex-col p-5" style={{ transform: 'translateZ(28px)' }}>
+        <div className="flex flex-1 flex-col p-5">
           <h3 className="text-lg font-extrabold leading-snug transition group-hover:text-brand-600 dark:group-hover:text-brand-400">
             {car.name}
           </h3>
@@ -129,7 +101,7 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
