@@ -67,8 +67,18 @@ const STATUS_META: Record<
 };
 
 const BULAN_NAMA = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 
 type ViewMode = 'active' | 'archive';
@@ -142,7 +152,7 @@ export default function AdminTransaksiPage() {
     .filter((o) => o.status === 'approved' || o.status === 'done')
     .reduce((sum, o) => sum + o.total_price, 0);
 
-  // ============ SOFT DELETE ============
+  // ============ SOFT DELETE (ARSIP) ============
   const handleSoftDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
@@ -155,8 +165,14 @@ export default function AdminTransaksiPage() {
         .eq('id', deleteId);
       if (error) throw error;
 
+      // Update state lokal — tanpa refetch biar tidak flash
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === deleteId ? { ...o, deleted_at: new Date().toISOString() } : o
+        )
+      );
+
       setDeleteId(null);
-      fetchOrders();
     } catch (err) {
       console.error(err);
       alert('Gagal memindahkan pesanan ke arsip.');
@@ -174,7 +190,11 @@ export default function AdminTransaksiPage() {
         .update({ deleted_at: null })
         .eq('id', id);
       if (error) throw error;
-      fetchOrders();
+
+      // Update state lokal
+      setOrders((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, deleted_at: null } : o))
+      );
     } catch (err) {
       console.error(err);
       alert('Gagal memulihkan pesanan.');
@@ -204,14 +224,16 @@ export default function AdminTransaksiPage() {
         if (storageErr) console.error('Gagal hapus file:', storageErr);
       }
 
+      // Hapus order dari database
       const { error: dbErr } = await supabase
         .from('orders')
         .delete()
         .eq('id', permanentDeleteId);
       if (dbErr) throw dbErr;
 
+      // Update state lokal — hapus dari list
+      setOrders((prev) => prev.filter((o) => o.id !== permanentDeleteId));
       setPermanentDeleteId(null);
-      fetchOrders();
     } catch (err) {
       console.error(err);
       alert('Gagal menghapus permanen.');
