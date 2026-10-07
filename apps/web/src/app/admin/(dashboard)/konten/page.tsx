@@ -10,6 +10,7 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
+  Megaphone,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -30,6 +31,12 @@ export default function AdminKontenPage() {
   const [heroTitle, setHeroTitle] = useState('');
   const [heroSubtitle, setHeroSubtitle] = useState('');
   const [aboutDesc, setAboutDesc] = useState('');
+
+  // Promo Banner (NEW)
+  const [promoTitle, setPromoTitle] = useState('');
+  const [promoText, setPromoText] = useState('');
+  const [ctaText, setCtaText] = useState('');
+  const [ctaLink, setCtaLink] = useState('');
 
   // FAQ
   const [faqs, setFaqs] = useState<Faq[]>([]);
@@ -52,6 +59,10 @@ export default function AdminKontenPage() {
       setHeroTitle(getVal('hero_title'));
       setHeroSubtitle(getVal('hero_subtitle'));
       setAboutDesc(getVal('about_desc'));
+      setPromoTitle(getVal('promo_title'));
+      setPromoText(getVal('promo_text'));
+      setCtaText(getVal('cta_text'));
+      setCtaLink(getVal('cta_link'));
       setFaqs((faqRes.data as Faq[]) ?? []);
       setLoading(false);
     })();
@@ -64,11 +75,14 @@ export default function AdminKontenPage() {
     const supabase = createClient();
 
     try {
-      // Upsert site_content
       const upserts = [
         { key: 'hero_title', value: { text: heroTitle } },
         { key: 'hero_subtitle', value: { text: heroSubtitle } },
         { key: 'about_desc', value: { text: aboutDesc } },
+        { key: 'promo_title', value: { text: promoTitle } },
+        { key: 'promo_text', value: { text: promoText } },
+        { key: 'cta_text', value: { text: ctaText } },
+        { key: 'cta_link', value: { text: ctaLink } },
       ];
 
       for (const u of upserts) {
@@ -78,8 +92,10 @@ export default function AdminKontenPage() {
         if (err) throw err;
       }
 
-      // Update FAQ (delete + insert — paling simpel)
-      const { error: delErr } = await supabase.from('faqs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error: delErr } = await supabase
+        .from('faqs')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
       if (delErr) throw delErr;
 
       if (faqs.length > 0) {
@@ -102,7 +118,10 @@ export default function AdminKontenPage() {
   };
 
   const addFaq = () => {
-    setFaqs([...faqs, { id: crypto.randomUUID(), question: '', answer: '', sort_order: faqs.length + 1 }]);
+    setFaqs([
+      ...faqs,
+      { id: crypto.randomUUID(), question: '', answer: '', sort_order: faqs.length + 1 },
+    ]);
   };
 
   const removeFaq = (id: string) => {
@@ -212,11 +231,64 @@ export default function AdminKontenPage() {
         </div>
       </motion.div>
 
-      {/* FAQ */}
+      {/* Promo Banner (NEW) */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
+        className="mt-6 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/5 to-transparent p-6 backdrop-blur-xl"
+      >
+        <h2 className="mb-5 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-gold">
+          <Megaphone size={15} /> Banner Promo (Kotak di Bawah Hero)
+        </h2>
+
+        <div className="space-y-4">
+          <Label text="Judul Promo">
+            <input
+              value={promoTitle}
+              onChange={(e) => setPromoTitle(e.target.value)}
+              className={inputCls}
+              placeholder="✨ Promo Spesial Bulan Ini!"
+            />
+          </Label>
+
+          <Label text="Teks Promo">
+            <textarea
+              rows={3}
+              value={promoText}
+              onChange={(e) => setPromoText(e.target.value)}
+              className={inputCls}
+              placeholder="Dapatkan diskon 20% untuk penyewaan 3 hari atau lebih. Berlaku hingga akhir bulan!"
+            />
+          </Label>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Label text="Teks Tombol Utama (CTA)">
+              <input
+                value={ctaText}
+                onChange={(e) => setCtaText(e.target.value)}
+                className={inputCls}
+                placeholder="Jelajahi Mobil"
+              />
+            </Label>
+
+            <Label text="Link Tombol Utama">
+              <input
+                value={ctaLink}
+                onChange={(e) => setCtaLink(e.target.value)}
+                className={inputCls}
+                placeholder="/katalog"
+              />
+            </Label>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* FAQ */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
         className="mt-6 rounded-2xl border border-line bg-surface/60 p-6 backdrop-blur-xl"
       >
         <div className="mb-5 flex items-center justify-between">
@@ -238,10 +310,7 @@ export default function AdminKontenPage() {
         ) : (
           <div className="space-y-4">
             {faqs.map((f, idx) => (
-              <div
-                key={f.id}
-                className="rounded-xl border border-line bg-bg/50 p-4"
-              >
+              <div key={f.id} className="rounded-xl border border-line bg-bg/50 p-4">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-muted">FAQ #{idx + 1}</span>
                   <button

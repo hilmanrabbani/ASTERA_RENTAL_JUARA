@@ -20,12 +20,21 @@ const fadeUp = {
 interface SiteContent {
   hero_title: string;
   hero_subtitle: string;
+  promo_title: string;
+  promo_text: string;
+  cta_text: string;
+  cta_link: string;
 }
 
 const DEFAULT_CONTENT: SiteContent = {
   hero_title: 'Selamat Datang di Astera Rental Bandung',
   hero_subtitle:
     'Solusi Perjalanan Nyaman & Elegan Anda. Pilih armada favorit, isi data, dan mobil siap diantar ke lokasi Anda.',
+  promo_title: '✨ Konten ini bisa diubah dari Admin Portal!',
+  promo_text:
+    'Login sebagai admin → menu Konten Web → ubah judul & FAQ. Refresh halaman ini, otomatis berubah.',
+  cta_text: 'Jelajahi Mobil',
+  cta_link: '/katalog',
 };
 
 export default function HomePage() {
@@ -37,7 +46,14 @@ export default function HomePage() {
       const { data } = await supabase
         .from('site_content')
         .select('key, value')
-        .in('key', ['hero_title', 'hero_subtitle']);
+        .in('key', [
+          'hero_title',
+          'hero_subtitle',
+          'promo_title',
+          'promo_text',
+          'cta_text',
+          'cta_link',
+        ]);
 
       if (data && data.length > 0) {
         const getVal = (key: string) =>
@@ -46,12 +62,15 @@ export default function HomePage() {
         setContent({
           hero_title: getVal('hero_title') ?? DEFAULT_CONTENT.hero_title,
           hero_subtitle: getVal('hero_subtitle') ?? DEFAULT_CONTENT.hero_subtitle,
+          promo_title: getVal('promo_title') ?? DEFAULT_CONTENT.promo_title,
+          promo_text: getVal('promo_text') ?? DEFAULT_CONTENT.promo_text,
+          cta_text: getVal('cta_text') ?? DEFAULT_CONTENT.cta_text,
+          cta_link: getVal('cta_link') ?? DEFAULT_CONTENT.cta_link,
         });
       }
     })();
   }, []);
 
-  // Split judul jadi 3 bagian: sebelum "Astera Rental", "Astera Rental", setelahnya
   const titleParts = content.hero_title.split('Astera Rental');
 
   return (
@@ -104,12 +123,12 @@ export default function HomePage() {
         className="mt-9 flex flex-wrap items-center justify-center gap-4"
       >
         <Link
-          href="/katalog"
+          href={content.cta_link}
           className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full
                      bg-gradient-to-r from-brand-600 to-brand-500 px-7 py-3.5 text-sm font-bold text-white
                      shadow-xl transition hover:shadow-glow"
         >
-          <span className="relative z-10">Jelajahi Mobil</span>
+          <span className="relative z-10">{content.cta_text}</span>
           <ArrowRight
             size={17}
             className="relative z-10 transition-transform group-hover:translate-x-1"
@@ -154,11 +173,8 @@ export default function HomePage() {
 
       <Reveal delay={0.2} className="mt-20 w-full">
         <div className="glow-card rounded-3xl border border-line bg-surface/60 p-8 backdrop-blur-xl">
-          <h2 className="text-lg font-bold">✨ Konten ini bisa diubah dari Admin Portal!</h2>
-          <p className="mt-2 text-sm text-muted">
-            Login sebagai admin → menu <span className="font-bold text-gold">Konten Web</span> →
-            ubah judul &amp; FAQ. Refresh halaman ini, otomatis berubah.
-          </p>
+          <h2 className="text-lg font-bold">{content.promo_title}</h2>
+          <p className="mt-2 text-sm text-muted">{content.promo_text}</p>
         </div>
       </Reveal>
     </section>

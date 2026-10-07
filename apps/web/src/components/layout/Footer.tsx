@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Car, Instagram, Mail, MapPin, Phone } from 'lucide-react';
+import NextImage from 'next/image';
+import { Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { WhatsappIcon } from '@/components/ui/Icons';
 import { CONTACT, IG_LINK, MAIL_LINK, WA_LINK } from '@/lib/constants';
 
@@ -8,9 +9,15 @@ export default function Footer() {
     <footer className="relative mt-24 border-t border-line bg-surface/60 backdrop-blur">
       <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-800">
-              <Car size={20} className="text-white" />
+          <div className="flex items-center gap-3">
+            <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-line transition hover:shadow-glow">
+              <NextImage
+                src="/logo.png"
+                alt="Astera Rental Logo"
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
             </span>
             <span className="font-extrabold">Astera Rental</span>
           </div>

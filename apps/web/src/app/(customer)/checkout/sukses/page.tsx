@@ -39,7 +39,14 @@ function Inner() {
           untuk referensi.
         </p>
 
+        {/* ==== TOMBOL AKSI ==== */}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            href={`/invoice/${kode}`}
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-3.5 text-sm font-bold text-white shadow-xl transition hover:shadow-glow"
+          >
+            📄 Lihat Invoice
+          </Link>
           <a
             href={WA_LINK}
             target="_blank"
@@ -56,6 +63,7 @@ function Inner() {
           </Link>
         </div>
 
+        {/* ==== LANGKAH SELANJUTNYA ==== */}
         <div className="mt-12 rounded-3xl border border-line bg-surface/60 p-6 text-left backdrop-blur-xl">
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-gold">
             Langkah Selanjutnya
@@ -77,7 +85,7 @@ function Inner() {
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-500/15 text-xs font-bold text-brand-600 dark:text-brand-400">
                 3
               </span>
-              Lakukan pembayaran &amp; mobil siap diantar sesuai jadwal.
+              Lakukan pembayaran (Bayar di Tempat) &amp; mobil siap diantar sesuai jadwal.
             </li>
           </ol>
         </div>

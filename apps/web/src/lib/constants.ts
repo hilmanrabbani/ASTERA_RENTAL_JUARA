@@ -3,8 +3,9 @@ export const CONTACT = {
   whatsappDisplay: '0812-2300-5912',
   instagram: 'https://www.instagram.com/astera.bdg/',
   email: 'tamidbedul69@gmail.com',
-  address: 'Jl. Soekarno Hatta No. 123, Bandung, Jawa Barat',
-  mapsUrl: 'https://maps.google.com/?q=Astera+Rental+Bandung',
+  address: 'Jl. Hantap Raya, Babakan Surabaya, Kec. Kiaracondong, Kota Bandung, Jawa Barat 40281',
+  mapsUrl: 'https://www.google.com/maps/search/?api=1&query=3JMX%2BWPC+Bandung',
+  mapsEmbed: 'https://www.google.com/maps?q=3JMX%2BWPC+Bandung&z=17&output=embed',
 };
 
 export const WA_LINK = `https://wa.me/${CONTACT.whatsappRaw}`;

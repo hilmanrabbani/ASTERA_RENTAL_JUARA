@@ -147,14 +147,15 @@ export default function TentangPage() {
             </div>
 
             {/* Maps */}
-            <div className="mt-6 overflow-hidden rounded-3xl border border-line">
-              <iframe
-                title="Lokasi Astera Rental Bandung"
-                src="https://www.google.com/maps?q=Bandung&output=embed"
-                className="h-64 w-full"
-                loading="lazy"
-              />
-            </div>
+<div className="mt-6 overflow-hidden rounded-3xl border border-line">
+  <iframe
+    title="Lokasi Astera Rental Bandung"
+    src={CONTACT.mapsEmbed}
+    className="h-64 w-full"
+    loading="lazy"
+    referrerPolicy="no-referrer-when-downgrade"
+  />
+</div>
           </div>
         </Reveal>
 
