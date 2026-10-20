@@ -10,6 +10,7 @@ import {
   CreditCard,
   User,
   ArrowLeft,
+  Lock,
 } from 'lucide-react';
 import Link from 'next/link';
 import OrderSummary from '@/components/checkout/OrderSummary';
@@ -55,6 +56,12 @@ export default function CheckoutPage() {
       setLoadingCar(false);
     })();
   }, [params.id, setCar]);
+
+  // ============ LOCK JAM: 00:00 & 22:00 ============
+  useEffect(() => {
+    // Set jam mulai selalu 00:00 dan selesai 22:00
+    setRental({ startTime: '00:00', endTime: '22:00' });
+  }, [setRental]);
 
   // ============ AUTO-SET "DENGAN SOPIR" kalau mobil wajib sopir ============
   useEffect(() => {
@@ -117,17 +124,6 @@ export default function CheckoutPage() {
       return setError('Nomor KTP harus 16 digit.');
     }
 
-    // ==== VALIDASI JAM BOOKING (00:00 - 22:00) ====
-    const startHour = parseInt(rental.startTime.split(':')[0]);
-    const endHour = parseInt(rental.endTime.split(':')[0]);
-
-    if (startHour < 0 || startHour > 22) {
-      return setError('Jam mulai harus antara 00:00 - 22:00 WIB.');
-    }
-    if (endHour < 0 || endHour > 22) {
-      return setError('Jam selesai harus antara 00:00 - 22:00 WIB.');
-    }
-
     setLoading(true);
     const supabase = createClient();
     const kode = kodePesanan();
@@ -157,9 +153,9 @@ export default function CheckoutPage() {
         ktp_photo_url: ktpPath,
         selfie_photo_url: selfiePath,
         start_date: rental.startDate,
-        start_time: rental.startTime,
+        start_time: '00:00',
         end_date: rental.endDate,
-        end_time: rental.endTime,
+        end_time: '22:00',
         duration_days: durasi,
         service_type: rental.serviceType,
         price_per_day: car.price_per_day,
@@ -175,9 +171,9 @@ export default function CheckoutPage() {
         car_name: car.name,
         duration_days: durasi,
         start_date: rental.startDate,
-        start_time: rental.startTime,
+        start_time: '00:00',
         end_date: rental.endDate,
-        end_time: rental.endTime,
+        end_time: '22:00',
         service_type: rental.serviceType,
         total_price: total,
       });
@@ -271,6 +267,18 @@ export default function CheckoutPage() {
           </Card>
 
           <Card title="Jadwal & Layanan" icon={<ShieldCheck size={17} />}>
+            {/* Info jam operasional */}
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-gold/30 bg-gold/5 p-3 text-xs">
+              <Lock size={14} className="mt-0.5 shrink-0 text-gold" />
+              <div>
+                <p className="font-bold text-gold">Jam Booking Terkunci</p>
+                <p className="mt-0.5 text-muted">
+                  Sewa mulai pukul <strong>00:00 WIB</strong> dan berakhir{' '}
+                  <strong>22:00 WIB</strong>. Anda cukup pilih tanggal sewa.
+                </p>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Tanggal Mulai" required>
                 <input
@@ -281,18 +289,21 @@ export default function CheckoutPage() {
                   className={inputCls}
                 />
               </Field>
-              <Field label="Jam Mulai" required>
-                <input
-                  type="time"
-                  required
-                  min="00:00"
-                  max="22:00"
-                  value={rental.startTime}
-                  onChange={(e) => setRental({ startTime: e.target.value })}
-                  className={inputCls}
-                />
-                <span className="mt-1 block text-[11px] text-muted">
-                  ⏰ Jam operasional: 00:00 - 22:00 WIB
+              <Field label="Jam Mulai">
+                <div className="relative">
+                  <input
+                    type="time"
+                    value="00:00"
+                    disabled
+                    className={`${inputCls} cursor-not-allowed pr-10 opacity-70`}
+                  />
+                  <Lock
+                    size={14}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gold"
+                  />
+                </div>
+                <span className="mt-1 block text-[11px] text-gold">
+                  🔒 Terkunci pukul 00:00 WIB
                 </span>
               </Field>
               <Field label="Tanggal Selesai" required>
@@ -304,18 +315,21 @@ export default function CheckoutPage() {
                   className={inputCls}
                 />
               </Field>
-              <Field label="Jam Selesai" required>
-                <input
-                  type="time"
-                  required
-                  min="00:00"
-                  max="22:00"
-                  value={rental.endTime}
-                  onChange={(e) => setRental({ endTime: e.target.value })}
-                  className={inputCls}
-                />
-                <span className="mt-1 block text-[11px] text-muted">
-                  ⏰ Jam operasional: 00:00 - 22:00 WIB
+              <Field label="Jam Selesai">
+                <div className="relative">
+                  <input
+                    type="time"
+                    value="22:00"
+                    disabled
+                    className={`${inputCls} cursor-not-allowed pr-10 opacity-70`}
+                  />
+                  <Lock
+                    size={14}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gold"
+                  />
+                </div>
+                <span className="mt-1 block text-[11px] text-gold">
+                  🔒 Terkunci pukul 22:00 WIB
                 </span>
               </Field>
             </div>
