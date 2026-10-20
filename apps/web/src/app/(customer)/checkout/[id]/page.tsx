@@ -36,6 +36,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // ============ FETCH CAR ============
   useEffect(() => {
     (async () => {
       const supabase = createClient();
@@ -55,12 +56,27 @@ export default function CheckoutPage() {
     })();
   }, [params.id, setCar]);
 
+  // ============ AUTO-SET "DENGAN SOPIR" kalau mobil wajib sopir ============
+  useEffect(() => {
+    if (car?.requires_driver && rental.serviceType === 'lepas_kunci') {
+      setRental({ serviceType: 'dengan_sopir' });
+    }
+  }, [car, rental.serviceType, setRental]);
+
+  // ============ HITUNG DURASI & TOTAL ============
   const durasi = useMemo(
     () => hitungDurasi(rental.startDate, rental.startTime, rental.endDate, rental.endTime),
     [rental]
   );
-  const total = durasi * (car?.price_per_day ?? 0);
 
+  // Biaya sopir PER MOBIL (bukan constant)
+  const biayaPerHariSopir = car?.biaya_sopir ?? 150000;
+  const hargaMobil = durasi * (car?.price_per_day ?? 0);
+  const biayaSopir =
+    rental.serviceType === 'dengan_sopir' ? durasi * biayaPerHariSopir : 0;
+  const total = hargaMobil + biayaSopir;
+
+  // ============ LOADING STATE ============
   if (loadingCar) {
     return (
       <section className="mx-auto grid min-h-[60vh] place-items-center px-5">
@@ -86,6 +102,7 @@ export default function CheckoutPage() {
     );
   }
 
+  // ============ SUBMIT HANDLER ============
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -98,6 +115,17 @@ export default function CheckoutPage() {
     }
     if (form.ktp_number.length !== 16) {
       return setError('Nomor KTP harus 16 digit.');
+    }
+
+    // ==== VALIDASI JAM BOOKING (00:00 - 22:00) ====
+    const startHour = parseInt(rental.startTime.split(':')[0]);
+    const endHour = parseInt(rental.endTime.split(':')[0]);
+
+    if (startHour < 0 || startHour > 22) {
+      return setError('Jam mulai harus antara 00:00 - 22:00 WIB.');
+    }
+    if (endHour < 0 || endHour > 22) {
+      return setError('Jam selesai harus antara 00:00 - 22:00 WIB.');
     }
 
     setLoading(true);
@@ -163,6 +191,27 @@ export default function CheckoutPage() {
       setLoading(false);
     }
   };
+
+  // ============ OPSI LAYANAN (dynamic) ============
+  const layananOpsi: Array<{
+    value: 'lepas_kunci' | 'dengan_sopir';
+    label: string;
+    desc: string;
+    biaya: number | null;
+  }> = [
+    { value: 'lepas_kunci', label: 'Lepas Kunci', desc: 'Anda menyetir sendiri', biaya: null },
+    {
+      value: 'dengan_sopir',
+      label: 'Dengan Sopir',
+      desc: 'Lebih praktis & aman',
+      biaya: car.biaya_sopir ?? 150000,
+    },
+  ];
+
+  const opsiFiltered = layananOpsi.filter((opt) => {
+    if (car.requires_driver && opt.value === 'lepas_kunci') return false;
+    return true;
+  });
 
   return (
     <section className="mx-auto max-w-6xl px-5 pb-24 sm:px-8">
@@ -236,10 +285,15 @@ export default function CheckoutPage() {
                 <input
                   type="time"
                   required
+                  min="00:00"
+                  max="22:00"
                   value={rental.startTime}
                   onChange={(e) => setRental({ startTime: e.target.value })}
                   className={inputCls}
                 />
+                <span className="mt-1 block text-[11px] text-muted">
+                  ⏰ Jam operasional: 00:00 - 22:00 WIB
+                </span>
               </Field>
               <Field label="Tanggal Selesai" required>
                 <input
@@ -254,35 +308,48 @@ export default function CheckoutPage() {
                 <input
                   type="time"
                   required
+                  min="00:00"
+                  max="22:00"
                   value={rental.endTime}
                   onChange={(e) => setRental({ endTime: e.target.value })}
                   className={inputCls}
                 />
+                <span className="mt-1 block text-[11px] text-muted">
+                  ⏰ Jam operasional: 00:00 - 22:00 WIB
+                </span>
               </Field>
             </div>
 
             <p className="mt-4 text-sm font-semibold">Opsi Layanan</p>
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  ['lepas_kunci', 'Lepas Kunci', 'Anda menyetir sendiri'],
-                  ['dengan_sopir', 'Dengan Sopir', 'Lebih praktis & aman'],
-                ] as const
-              ).map(([val, t, s]) => (
-                <button
-                  type="button"
-                  key={val}
-                  onClick={() => setRental({ serviceType: val })}
-                  className={`rounded-2xl border-2 p-4 text-left transition ${
-                    rental.serviceType === val
-                      ? 'border-gold bg-gold/10 shadow-glow'
-                      : 'border-line hover:border-gold/50'
-                  }`}
-                >
-                  <span className="block text-sm font-bold">{t}</span>
-                  <span className="block text-xs text-muted">{s}</span>
-                </button>
-              ))}
+              {opsiFiltered.map((opt) => {
+                const isActive = rental.serviceType === opt.value;
+                return (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => setRental({ serviceType: opt.value })}
+                    className={`relative rounded-2xl border-2 p-4 text-left transition ${
+                      isActive
+                        ? 'border-gold bg-gold/10 shadow-glow'
+                        : 'border-line hover:border-gold/50'
+                    }`}
+                  >
+                    <span className="block text-sm font-bold">{opt.label}</span>
+                    <span className="block text-xs text-muted">{opt.desc}</span>
+                    {opt.biaya !== null && (
+                      <span className="mt-2 inline-flex items-center gap-1 rounded-lg bg-gold/15 px-2 py-0.5 text-[11px] font-bold text-gold">
+                        + Rp {opt.biaya.toLocaleString('id-ID')}/hari
+                      </span>
+                    )}
+                    {car.requires_driver && opt.value === 'dengan_sopir' && (
+                      <span className="mt-1 block text-[10px] font-semibold text-amber-500">
+                        ⚠️ Wajib sopir untuk unit ini
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </Card>
 

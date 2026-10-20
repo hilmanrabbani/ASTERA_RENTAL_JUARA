@@ -13,3 +13,4 @@ export const IG_LINK = CONTACT.instagram;
 export const MAIL_LINK = `mailto:${CONTACT.email}?subject=Informasi%20Rental%20Mobil%20Astera`;
 
 export const CATEGORIES = ['City Car', 'MPV', 'SUV', 'Luxury', 'Van'] as const;
+export const BIAYA_SOPIR = 150_000; // Rp 150.000/hari

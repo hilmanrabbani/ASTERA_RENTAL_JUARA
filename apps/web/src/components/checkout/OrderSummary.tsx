@@ -17,6 +17,10 @@ export default function OrderSummary({
   durasi: number;
   total: number;
 }) {
+  const isDenganSopir = rental.serviceType === 'dengan_sopir';
+  const biayaPerHariSopir = car.biaya_sopir ?? 150000;
+  const biayaSopir = isDenganSopir ? biayaPerHariSopir * durasi : 0;
+
   return (
     <motion.aside
       initial={{ opacity: 0, x: 28 }}
@@ -57,19 +61,30 @@ export default function OrderSummary({
           <Row
             icon={<Wrench size={14} />}
             label="Layanan"
-            value={rental.serviceType === 'dengan_sopir' ? 'Dengan Sopir' : 'Lepas Kunci'}
+            value={isDenganSopir ? 'Dengan Sopir' : 'Lepas Kunci'}
           />
 
           <div className="my-3 border-t border-dashed border-line" />
 
+          {/* Rincian Harga */}
           <div className="flex justify-between text-xs text-muted">
             <span>Harga / hari</span>
             <span>{rupiah(car.price_per_day)}</span>
           </div>
           <div className="flex justify-between text-xs text-muted">
-            <span>× {durasi} hari</span>
+            <span>Sewa {durasi} hari</span>
             <span>{rupiah(car.price_per_day * durasi)}</span>
           </div>
+
+          {/* Baris Jasa Sopir — hanya muncul kalau "Dengan Sopir" */}
+          {isDenganSopir && (
+            <div className="flex justify-between text-xs font-semibold text-gold">
+              <span>
+                + Jasa Sopir ({durasi} × {rupiah(biayaPerHariSopir)})
+              </span>
+              <span>{rupiah(biayaSopir)}</span>
+            </div>
+          )}
 
           <div className="mt-3 flex items-end justify-between rounded-2xl bg-brand-500/10 p-4">
             <span className="text-xs font-bold uppercase tracking-wider text-muted">Total</span>

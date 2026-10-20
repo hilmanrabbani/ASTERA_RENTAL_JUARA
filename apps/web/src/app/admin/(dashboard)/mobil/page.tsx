@@ -28,6 +28,8 @@ interface Car {
   status: 'available' | 'rented' | 'maintenance';
   description: string | null;
   is_featured: boolean;
+  requires_driver?: boolean;
+  biaya_sopir?: number;
 }
 
 const EMPTY: Omit<Car, 'id'> = {
@@ -41,6 +43,8 @@ const EMPTY: Omit<Car, 'id'> = {
   status: 'available',
   description: '',
   is_featured: false,
+  requires_driver: false,
+  biaya_sopir: 150000,
 };
 
 export default function AdminMobilPage() {
@@ -92,6 +96,8 @@ export default function AdminMobilPage() {
       status: car.status,
       description: car.description ?? '',
       is_featured: car.is_featured,
+      requires_driver: car.requires_driver ?? false,
+      biaya_sopir: car.biaya_sopir ?? 150000,
     });
     setFile(null);
     setError('');
@@ -240,6 +246,11 @@ export default function AdminMobilPage() {
                       ? 'Disewa'
                       : 'Maintenance'}
                 </span>
+                {c.requires_driver && (
+                  <span className="absolute right-2 top-2 rounded-full bg-gold/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-black backdrop-blur">
+                    🚗 Wajib Sopir
+                  </span>
+                )}
               </div>
 
               <div className="p-4">
@@ -252,6 +263,12 @@ export default function AdminMobilPage() {
                   </span>
                   <span className="text-[11px] text-muted">{c.transmission}</span>
                 </div>
+
+                {c.biaya_sopir && c.biaya_sopir > 0 && (
+                  <p className="mt-1 text-[11px] text-muted">
+                    Sopir: +{rupiah(c.biaya_sopir)}/hari
+                  </p>
+                )}
 
                 <div className="mt-4 flex gap-2">
                   <button
@@ -273,7 +290,7 @@ export default function AdminMobilPage() {
         </div>
       )}
 
-      {/* Modal Form — versi scrollable */}
+      {/* Modal Form */}
       <AnimatePresence>
         {modalOpen && (
           <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -385,6 +402,47 @@ export default function AdminMobilPage() {
                     </Label>
                   </div>
 
+                  {/* Checkbox Wajib Sopir */}
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-bg/50 p-4 transition hover:border-gold/50">
+                    <input
+                      type="checkbox"
+                      checked={form.requires_driver ?? false}
+                      onChange={(e) =>
+                        setForm({ ...form, requires_driver: e.target.checked })
+                      }
+                      className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded accent-[rgb(var(--gold))]"
+                    />
+                    <span>
+                      <span className="block text-sm font-bold">
+                        🚗 Tidak Bisa Lepas Kunci
+                      </span>
+                      <span className="mt-1 block text-xs text-muted">
+                        Centang jika unit ini <strong>wajib dengan sopir</strong>. Customer
+                        tidak akan bisa memilih opsi &quot;Lepas Kunci&quot; di halaman
+                        pemesanan.
+                      </span>
+                    </span>
+                  </label>
+
+                  {/* Biaya Sopir per Hari */}
+                  <Label text="Biaya Jasa Sopir (Rp / hari)">
+                    <input
+                      type="number"
+                      min={0}
+                      step={10000}
+                      value={form.biaya_sopir ?? 150000}
+                      onChange={(e) =>
+                        setForm({ ...form, biaya_sopir: +e.target.value })
+                      }
+                      className={inputCls}
+                      placeholder="150000"
+                    />
+                    <span className="mt-1 block text-[11px] text-muted">
+                      Biaya tambahan jika customer memilih &quot;Dengan Sopir&quot;. Default:
+                      Rp 150.000
+                    </span>
+                  </Label>
+
                   <Label text="Deskripsi">
                     <textarea
                       rows={2}
@@ -402,7 +460,9 @@ export default function AdminMobilPage() {
                         {file ? file.name.slice(0, 32) : 'Klik untuk upload foto baru'}
                       </span>
                       <span className="text-[10px] text-muted">
-                        {form.image_url ? 'Foto lama tetap dipakai kalau tidak upload' : 'JPG/PNG'}
+                        {form.image_url
+                          ? 'Foto lama tetap dipakai kalau tidak upload'
+                          : 'JPG/PNG'}
                       </span>
                       <input
                         type="file"

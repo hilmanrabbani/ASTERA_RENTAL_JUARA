@@ -12,6 +12,8 @@ export interface Car {
   status: CarStatus;
   description: string;
   is_featured: boolean;
+  requires_driver?: boolean;
+  biaya_sopir?: number; // ← TAMBAH INI
 }
 
 export const dummyCars: Car[] = [
@@ -28,6 +30,8 @@ export const dummyCars: Car[] = [
     status: 'available',
     description: 'MPV keluarga yang nyaman dan irit untuk perjalanan dalam & luar kota.',
     is_featured: true,
+    requires_driver: false,
+    biaya_sopir: 150000,
   },
   {
     id: 'car-002',
@@ -42,6 +46,8 @@ export const dummyCars: Car[] = [
     status: 'available',
     description: 'City car lincah dan hemat BBM, cocok untuk mobilitas perkotaan.',
     is_featured: true,
+    requires_driver: false,
+    biaya_sopir: 100000,
   },
   {
     id: 'car-003',
@@ -56,6 +62,8 @@ export const dummyCars: Car[] = [
     status: 'available',
     description: 'MPV premium dengan kabin lega, cocok untuk perjalanan bisnis & keluarga.',
     is_featured: true,
+    requires_driver: false,
+    biaya_sopir: 150000,
   },
   {
     id: 'car-004',
@@ -70,6 +78,8 @@ export const dummyCars: Car[] = [
     status: 'available',
     description: 'SUV tangguh dengan performa tinggi untuk segala medan.',
     is_featured: false,
+    requires_driver: false,
+    biaya_sopir: 200000,
   },
   {
     id: 'car-005',
@@ -84,6 +94,8 @@ export const dummyCars: Car[] = [
     status: 'available',
     description: 'MPV mewah dengan kenyamanan kelas eksekutif untuk tamu VIP.',
     is_featured: true,
+    requires_driver: true,
+    biaya_sopir: 250000,
   },
   {
     id: 'car-006',
@@ -98,6 +110,8 @@ export const dummyCars: Car[] = [
     status: 'rented',
     description: 'SUV ringkas 7 penumpang dengan konsumsi BBM efisien.',
     is_featured: false,
+    requires_driver: false,
+    biaya_sopir: 150000,
   },
   {
     id: 'car-007',
@@ -112,6 +126,8 @@ export const dummyCars: Car[] = [
     status: 'available',
     description: 'SUV compact modern dengan desain sporty dan kabin premium.',
     is_featured: false,
+    requires_driver: false,
+    biaya_sopir: 150000,
   },
   {
     id: 'car-008',
@@ -126,5 +142,7 @@ export const dummyCars: Car[] = [
     status: 'available',
     description: 'MPV keluarga dengan kabin luas dan harga sewa terjangkau.',
     is_featured: false,
+    requires_driver: false,
+    biaya_sopir: 150000,
   },
 ];
